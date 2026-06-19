@@ -106,7 +106,3 @@ private struct WindowCloser: NSViewRepresentable {
 
   func updateNSView(_ nsView: NSView, context: Context) {}
 }
-
-#Preview {
-  ContentView()
-}

@@ -46,7 +46,7 @@ final class OverlayPanelRepositoryImpl: OverlayPanelRepository {
       iconImageCache[targetPID] = img
       return img
     }()
-    let onHide = { [weak self] in
+    let onHide: @Sendable () -> Void = { [weak self] in
       guard let self else { return }
       Task { @MainActor in self.hide() }
     }
