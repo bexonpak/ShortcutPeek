@@ -24,10 +24,19 @@ final class OverlayViewModel {
 
   private var settingsPanel: NSWindow?
 
+  /// Observers for cleanup.
+  private var settingsCloseObserver: NSObjectProtocol?
+
   /// Whether the overlay is globally enabled (proxied from the use case).
   var isEnabled: Bool { useCase.isEnabled }
 
   // MARK: – Init
+
+  deinit {
+    if let obs = settingsCloseObserver {
+      NotificationCenter.default.removeObserver(obs)
+    }
+  }
 
   init(useCase: OverlayUseCase) {
     self.useCase = useCase
@@ -55,14 +64,13 @@ final class OverlayViewModel {
       defer: false
     )
     window.title = "CheatKey Settings"
-    window.isReleasedWhenClosed = false
     window.level = .floating
     window.center()
     window.contentViewController = NSHostingController(rootView: SettingsView())
     window.makeKeyAndOrderFront(nil)
     NSApp.activate(ignoringOtherApps: true)
 
-    NotificationCenter.default.addObserver(
+    settingsCloseObserver = NotificationCenter.default.addObserver(
       forName: NSWindow.willCloseNotification,
       object: window,
       queue: .main

@@ -39,7 +39,7 @@ final class AppTrackerRepositoryImpl: AppTrackerRepository {
   private var observer: NSObjectProtocol?
 
   deinit {
-    if let obs = observer { NotificationCenter.default.removeObserver(obs) }
+    if let obs = observer { NSWorkspace.shared.notificationCenter.removeObserver(obs) }
   }
 
   func start() {

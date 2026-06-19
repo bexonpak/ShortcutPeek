@@ -25,6 +25,12 @@ final class MenuBarManager {
 
   private let statusItem: NSStatusItem
 
+  // MARK: – Lifecycle
+
+  deinit {
+    NSStatusBar.system.removeStatusItem(statusItem)
+  }
+
   // MARK: – Init
 
   init(overlayViewModel: OverlayViewModel) {
