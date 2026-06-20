@@ -32,7 +32,7 @@ final class OverlayPanelRepositoryImpl: OverlayPanelRepository {
 
   /// Shows the overlay near the center of the screen that currently
   /// contains the mouse pointer.
-  func show(shortcuts: [ShortcutGroup], appName: String, appIconData: Data?, targetPID: pid_t) {
+  func show(shortcuts: [ShortcutGroup], appName: String, appIconData: Data?, targetPID: pid_t, showsCloseButton: Bool = false) {
     let panel = existingPanel ?? makePanel()
     self.panel = panel
 
@@ -50,12 +50,18 @@ final class OverlayPanelRepositoryImpl: OverlayPanelRepository {
       guard let self else { return }
       Task { @MainActor in self.hide() }
     }
+    let onClose: @Sendable () -> Void = { [weak self] in
+      guard let self else { return }
+      Task { @MainActor in self.hide() }
+    }
     let viewModel = OverlayPanelViewModel(
       shortcutGroups: shortcuts,
       appName: appName,
       appIcon: image,
       targetPID: targetPID,
-      onShortcutExecuted: onHide
+      onShortcutExecuted: onHide,
+      showsCloseButton: showsCloseButton,
+      onClose: showsCloseButton ? onClose : nil
     )
     let overlay = OverlayView(viewModel: viewModel)
     let host = NSHostingController(rootView: overlay)

@@ -12,7 +12,7 @@ import SwiftUI
 ///
 /// All business logic lives in `OverlayUseCase`; this ViewModel is
 /// responsible only for translating use‑case state into UI‑ready
-/// actions and managing the settings window.
+/// actions.
 @MainActor
 final class OverlayViewModel {
 
@@ -20,23 +20,10 @@ final class OverlayViewModel {
 
   private let useCase: OverlayUseCase
 
-  // MARK: – Presentation state
-
-  private var settingsPanel: NSWindow?
-
-  /// Observers for cleanup.
-  private var settingsCloseObserver: NSObjectProtocol?
-
   /// Whether the overlay is globally enabled (proxied from the use case).
   var isEnabled: Bool { useCase.isEnabled }
 
   // MARK: – Init
-
-  deinit {
-    if let obs = settingsCloseObserver {
-      NotificationCenter.default.removeObserver(obs)
-    }
-  }
 
   init(useCase: OverlayUseCase) {
     self.useCase = useCase
@@ -48,39 +35,5 @@ final class OverlayViewModel {
 
   func toggleEnabled() { useCase.toggleEnabled() }
 
-  // MARK: – Settings window (presentation concern)
-
-  func openSettings() {
-    if let panel = settingsPanel, panel.isVisible {
-      panel.makeKeyAndOrderFront(nil)
-      NSApp.activate(ignoringOtherApps: true)
-      return
-    }
-
-    let window = NSWindow(
-      contentRect: NSRect(x: 0, y: 0, width: 440, height: 300),
-      styleMask: [.titled, .closable],
-      backing: .buffered,
-      defer: false
-    )
-    window.title = "CheatKey Settings"
-    window.level = .floating
-    window.center()
-    window.contentViewController = NSHostingController(rootView: SettingsView())
-    window.makeKeyAndOrderFront(nil)
-    NSApp.activate(ignoringOtherApps: true)
-
-    settingsCloseObserver = NotificationCenter.default.addObserver(
-      forName: NSWindow.willCloseNotification,
-      object: window,
-      queue: .main
-    ) { [weak self] _ in
-      guard let self else { return }
-      Task { @MainActor in
-        self.settingsPanel = nil
-      }
-    }
-
-    settingsPanel = window
-  }
+  func showShortcuts() { useCase.showShortcuts() }
 }

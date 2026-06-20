@@ -31,6 +31,9 @@ final class OverlayUseCaseImpl: OverlayUseCase {
   private var readTask: Task<Void, Never>?
   private var isOverlayVisible = false
   private var isStarted = false
+  /// Tracks whether the currently visible overlay was triggered from the
+  /// menu bar (with a close button) vs. from the command‑key hold.
+  private var isMenuOverlay = false
 
   /// Cache the last successful shortcut read so we don't repeat AX reads
   /// when the frontmost app hasn't changed.
@@ -76,10 +79,17 @@ final class OverlayUseCaseImpl: OverlayUseCase {
     appTracker.activeAppChanged
       .sink { [weak self] _ in
         guard let self, isOverlayVisible else { return }
+
+        // Menu-triggered overlay is a one‑time peek — hide on app switch.
+        if isMenuOverlay {
+          hideOverlay()
+          return
+        }
+
         // App changed — invalidate cached shortcuts so we re-read.
         lastAppPID = nil
         cachedGroups = nil
-        refreshOverlay()
+        refreshOverlay(fromMenu: false)
       }
       .store(in: &cancellables)
 
@@ -106,6 +116,11 @@ final class OverlayUseCaseImpl: OverlayUseCase {
   func toggleEnabled() {
     isEnabled.toggle()
     if !isEnabled { hideOverlay() }
+  }
+
+  func showShortcuts() {
+    // Always show from menu — independent of the enabled/disabled toggle.
+    showOverlay(fromMenu: true)
   }
 
   // MARK: – Hold-timer logic
@@ -143,19 +158,21 @@ final class OverlayUseCaseImpl: OverlayUseCase {
 
   // MARK: – Overlay show / hide
 
-  private func showOverlay() {
+  private func showOverlay(fromMenu: Bool = false) {
     isOverlayVisible = true
-    refreshOverlay()
+    isMenuOverlay = fromMenu
+    refreshOverlay(fromMenu: fromMenu)
   }
 
   private func hideOverlay() {
     isOverlayVisible = false
+    isMenuOverlay = false
     readTask?.cancel()
     readTask = nil
     panelController.hide()
   }
 
-  private func refreshOverlay() {
+  private func refreshOverlay(fromMenu: Bool = false) {
     guard let app = ActiveApp.current() else { return }
     readTask?.cancel()
 
@@ -167,7 +184,8 @@ final class OverlayUseCaseImpl: OverlayUseCase {
         shortcuts: groups,
         appName: cachedAppName ?? app.name,
         appIconData: cachedAppIconData ?? app.icon,
-        targetPID: app.pid
+        targetPID: app.pid,
+        showsCloseButton: fromMenu
       )
       return
     }
@@ -183,7 +201,8 @@ final class OverlayUseCaseImpl: OverlayUseCase {
           shortcuts: groups,
           appName: app.name,
           appIconData: app.icon,
-          targetPID: app.pid
+          targetPID: app.pid,
+          showsCloseButton: fromMenu
         )
         return
       }

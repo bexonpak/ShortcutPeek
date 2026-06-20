@@ -12,6 +12,7 @@ import Cocoa
 ///
 /// Provides a dropdown menu with:
 /// - Toggle overlay on/off
+/// - Show Shortcuts (with close button)
 /// - Open settings
 /// - Quit
 @MainActor
@@ -20,6 +21,7 @@ final class MenuBarManager {
   // MARK: – Dependencies
 
   private let overlayViewModel: OverlayViewModel
+  private let settingsManager = SettingsWindowManager()
 
   // MARK: – State
 
@@ -63,6 +65,14 @@ final class MenuBarManager {
     toggleItem.target = self
     menu.addItem(toggleItem)
 
+    let showShortcutsItem = NSMenuItem(
+      title: "Show Shortcuts…",
+      action: #selector(showOverlay),
+      keyEquivalent: ""
+    )
+    showShortcutsItem.target = self
+    menu.addItem(showShortcutsItem)
+
     menu.addItem(NSMenuItem.separator())
 
     let settingsItem = NSMenuItem(
@@ -100,8 +110,12 @@ final class MenuBarManager {
     updateMenu()
   }
 
+  @objc private func showOverlay() {
+    overlayViewModel.showShortcuts()
+  }
+
   @objc private func openSettings() {
-    overlayViewModel.openSettings()
+    settingsManager.open()
   }
 
   @objc private func quitApp() {

@@ -15,4 +15,5 @@ protocol OverlayUseCase: AnyObject {
   func start()
   func stop()
   func toggleEnabled()
+  func showShortcuts()
 }

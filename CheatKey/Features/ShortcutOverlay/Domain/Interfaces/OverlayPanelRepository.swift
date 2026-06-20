@@ -10,6 +10,6 @@ import Foundation
 /// Abstracts the floating panel lifecycle so UseCases do not depend
 /// on the concrete `OverlayPanelRepositoryImpl` implementation.
 protocol OverlayPanelRepository: AnyObject {
-  func show(shortcuts: [ShortcutGroup], appName: String, appIconData: Data?, targetPID: pid_t)
+  func show(shortcuts: [ShortcutGroup], appName: String, appIconData: Data?, targetPID: pid_t, showsCloseButton: Bool)
   func hide()
 }
