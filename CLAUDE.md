@@ -1,17 +1,20 @@
 # Project Architecture
 
-This project strictly follows **Clean Architecture** with MVVM in the Presentation layer, organized as **feature-first vertical slices**. Swift 6 concurrency with `@MainActor`.
+This project strictly follows **Clean Architecture** with MVVM (ViewModels & Managers in `Presentation/`, SwiftUI views in `UI/`), organized as **feature-first vertical slices**. Swift 6 concurrency with `@MainActor`.
 
 ## Directory Structure
 
 ```
-CheatKey/
-├── CheatKeyApp.swift              # @main entry point
+ShortcutPeek/
+├── ShortcutPeekApp.swift              # @main entry point
 ├── ContentView.swift              # AX permission onboarding window
 ├── Features/
 │   ├── Settings/
 │   │   └── Presentation/
-│   │       └── SettingsView.swift # Login item, hold duration, update check
+│   │       ├── UI/
+│   │       │   └── SettingsView.swift         # Login item, hold duration, update check
+│   │       └── Managers/
+│   │           └── SettingsWindowManager.swift # Settings NSWindow lifecycle (decoupled from overlay)
 │   └── ShortcutOverlay/
 │       ├── Domain/
 │       │   ├── Entities/
@@ -33,7 +36,10 @@ CheatKey/
 │       │       ├── ShortcutExecutor.swift           # CGEvent keyboard synthesis
 │       │       └── AccessibilityService.swift       # AX permission check & request
 │       └── Presentation/
-│           ├── OverlayView.swift         # SwiftUI floating card + ShortcutTileView
+│           ├── UI/
+│           │   ├── Components/
+│           │   │   └── ShortcutTileView.swift
+│           │   └── OverlayView.swift         # Main floating card
 │           └── OverlayViewModel.swift    # Bridge between UseCase and Views
 ├── Infrastructure/
 │   └── DependencyInjection/
@@ -69,7 +75,7 @@ View (SwiftUI) → ViewModel → UseCase (protocol)
 
 2. **`ShortcutExecutor.cgEventFlags` uses switch, not reduce** — `CGEventFlags(rawValue:)` construction behaves differently from `.insert()`. The explicit switch is required for correct modifier flag behavior.
 
-3. **`pid_t` flows through the entire chain** — `ActiveApp.current().pid` → UseCase → PanelRepository → ViewModel → TileView → ShortcutExecutor. Never query `frontmostApplication` at execution time (it returns CheatKey because the floating panel receives the click).
+3. **`pid_t` flows through the entire chain** — `ActiveApp.current().pid` → UseCase → PanelRepository → ViewModel → TileView → ShortcutExecutor. Never query `frontmostApplication` at execution time (it returns ShortcutPeek because the floating panel receives the click).
 
 4. **`@MainActor` on implementations, not protocols** — Protocols stay actor-agnostic. Implementations are `@MainActor` since they interact with AppKit.
 
@@ -78,10 +84,16 @@ View (SwiftUI) → ViewModel → UseCase (protocol)
 ## How the App Works
 
 1. **Startup**: `FeatureAssembly.makeOverlayViewModel()` wires all dependencies.
-2. **Menu bar**: `MenuBarManager` puts a ⌘ icon in the system menu bar (toggle, settings, quit).
-3. **Trigger**: User holds ⌘ for N seconds (configurable: 0.7s / 1s / 2s).
+2. **Menu bar**: `MenuBarManager` puts a ⌘ icon in the system menu bar (toggle, show shortcuts, settings, quit).
+3. **Trigger**:
+   - **Hold ⌘**: User holds ⌘ for N seconds (configurable: 0.7s / 1s / 2s) → overlay shows the frontmost app's shortcuts.
+   - **Menu bar**: User clicks "Show Shortcuts…" → overlay shows with a close button in the top‑right. Switching apps dismisses it.
 4. **Detection**: `KeyMonitorRepositoryImpl` uses both global and local NSEvent monitors.
 5. **Reading**: `MenuBarShortcutReader` reads the frontmost app's menu bar via Accessibility API.
 6. **Display**: `OverlayPanelRepositoryImpl` creates a non-activating NSPanel with SwiftUI content.
 7. **Execution**: Tapping a tile calls `ShortcutExecutor.execute(item, targetPID:)` which posts CGEvent keyDown/keyUp to the target app.
-8. **Hide**: Releasing ⌘ hides the panel. Switching apps while holding ⌘ refreshes shortcuts.
+8. **Hide**: Releasing ⌘ hides the panel. Switching apps while holding ⌘ refreshes shortcuts. Menu‑triggered overlay hides on app switch.
+
+## Settings
+
+The settings window is managed by `SettingsWindowManager`, a standalone class completely decoupled from the shortcut overlay. It is created inside `MenuBarManager` directly — no use‑case or repository layer needed. `OverlayViewModel` has no knowledge of settings.
