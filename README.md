@@ -5,7 +5,7 @@
 
 > ⌨️ A shortcut cheat sheet.
 
-A macOS menu bar app that shows keyboard shortcuts for the current application — just hold `⌘`. 🚀
+A macOS menu bar app that shows keyboard shortcuts for the current application — just hold `⌘`.
 
 <p align="center">
   <img src="Screenshots/ShortcutPeek-Overlay.png" alt="ShortcutPeek overlay showing Safari keyboard shortcuts" width="700">
@@ -32,11 +32,10 @@ Hold the Command key for a moment, and ShortcutPeek reads the frontmost app's me
 
 ShortcutPeek is not signed with an Apple Developer ID, because developing free and open-source software doesn't pay for a $99/year Apple Developer Program membership. As a result, macOS may block the app from opening.
 
-1. To run it, **double-click** the app in Finder, then confirm in the dialog:
-2. Click **Done**
-3. Open **System Settings** app, **Privacy & Security**, scroll down and find the **Open Anyway** button. 
-4. Click **Open Anyway**
-5. Use your **Touch ID** or enter your password to confirm.
+1. Download the zip file from the [releases](https://github.com/bexonpak/ShortcutPeek/releases/) page.
+2. Double-click the app in Finder, then confirm when prompted. ⚠️ Click **Done**
+3. Open **System Settings** → **Privacy & Security**, scroll down, and click the **Open Anyway** button.
+4. Confirm with your Touch ID or Lock Screen password.
 
 ## Building
 
@@ -44,10 +43,6 @@ ShortcutPeek is not signed with an Apple Developer ID, because developing free a
 xcodebuild -project ShortcutPeek.xcodeproj -scheme ShortcutPeek -configuration Release build
 ```
 
-## Architecture
-
-Feature-first vertical slices, Clean Architecture + MVVM. See [CLAUDE.md](./CLAUDE.md).
-
 ## License
 
-[GNU General Public License v3.0](LICENSE.txt)
+[ShortcutPeek](https://github.com/bexonpak/ShortcutPeek/) is open source on GitHub under the [GNU General Public License v3.0](LICENSE.txt).
